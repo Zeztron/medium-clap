@@ -1,4 +1,5 @@
 import React, { Component, useState } from 'react';
+import mojs from '@mojs/core';
 import styles from './index.css';
 
 const initialState = {
@@ -10,26 +11,39 @@ const initialState = {
 // Higher Order Component
 const withClapAnimation = WrappedComponent => {
   class WithClapAnimation extends Component {
-    // This handles animation logic
-    animate = () => {
-      console.log('%c Animate', 'background:yellow;color:black')
+    animationTimeline = new mojs.Timeline();
+
+    state = {
+      animationTimeline: this.animationTimeline
+    };
+
+    componentDidMount() {
+      const scaleButton = new mojs.Html({
+        el: '#clap',
+        duration: 300,
+        scale: { 1.3:1 },
+        easing: mojs.easing.ease.out
+      });
+
+      const newAnimationTimeline = this.animationTimeline.add([scaleButton]);
+      this.setState({ animationTimeline: newAnimationTimeline });
     };
 
     render() {
-      return <WrappedComponent {...this.props} animate={this.animate} />
+      return <WrappedComponent {...this.props} animationTimeline={this.state.animationTimeline} />
     };
   };
 
   return WithClapAnimation;
-}
+};
 
-const MediumClap = ({ animate }) => {
+const MediumClap = ({ animationTimeline }) => {
   const MAXIMUM_USER_CLAP = 50;
   const [clapState, setClapState] = useState(initialState);
   const { count, countTotal, isClicked } = clapState;
 
   const handleClapClick = () => {
-    animate();
+    animationTimeline.replay();
     setClapState(prevstate => ({
       isClicked: true,
       count: Math.min(count + 1, MAXIMUM_USER_CLAP),
@@ -41,7 +55,7 @@ const MediumClap = ({ animate }) => {
   };
 
   return (
-    <button className={styles.clap} onClick={handleClapClick}>
+    <button id='clap' className={styles.clap} onClick={handleClapClick}>
       <ClapIcon isClicked={isClicked} />
       <ClapCount count={count} />
       <CountTotal countTotal={countTotal} />
